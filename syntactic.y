@@ -1,27 +1,13 @@
 %{
-#include <stdio.h>
-#include <stdlib.h>
+
 #include <iostream>
-#include <vector>
 #include <string>
-#define YYSTYPE string
-using namespace std;
 
 int yylex(void);
 void yyerror(const char *s);
 
-struct connector {
-  string R;
-  string S;
-  connector (string r, string s){R=r;S=s;}
-};
-
-std::ostream& operator<<(std::ostream& os, const connector& c)
-{
-    return os << c.R << " " << c.S << " " << '\n';
-}
-
-std::vector<connector> circuit;
+bool error = false;
+int limit = 0;
 
 %}
 
@@ -58,52 +44,32 @@ connectors18 : RELAY | MINUTE;
 
 contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18  | R | S;
 contentT2 : contentT1 | G ;
-morecontentT1 : ')' | ',' contentT1 ',' contentT1 morecontentT1;
+morecontentT1 : ')' | ',' contentT1 ',' contentT1 {limit+=2;} morecontentT1;
 morecontentT2 : ')' | ',' contentT2 ')';
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
-          {
-            circuit.push_back(connector(true,true));
-            circuit.push_back(connector($1,$2));
-          }
-          | connectors3 '(' contentT2 ',' contentT2 ','    contentT2 ')'
-          {
-            //
-          }
+          | connectors3 '(' contentT2 ',' contentT2 ',' contentT2 ')'
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
-          {
-            //
-          }
           | connectors6 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ')'
+          | connectors18 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 morecontentT1
           {
-            //
-          }
-          |
-          connectors18 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 morecontentT1
-          {
-            //
+            limit += 4; if (limit>18) { std::cerr << "Error. Relay or Minute with " << limit << " pins" << std::endl; error = true;} else {limit = 0;}
           };
 
 
 %%
 
-bool checkCircuit(){
-
-}
-
 void yyerror(const char* s) {
-  printf("Error %s",s);
+  std::cerr << "Error " << s << std::endl;
 }
 
 int main() {
 
   yyparse();
 
-  std::cout << circuit.size() << std::endl;
-  for(auto i:circuit){
-    std::cout << i << std::endl;
+  if (!error) {
+    std::cout << "Correct entry" << std::endl;
   }
-  printf("Correct entry.\n");
 
   return 0;
 }
