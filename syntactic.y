@@ -4,17 +4,22 @@
 #include <iostream>
 #include <vector>
 #include <string>
-
+#define YYSTYPE string
 using namespace std;
 
 int yylex(void);
 void yyerror(const char *s);
-   
+
 struct connector {
-  bool R;
-  bool S;
-  connector (bool r, bool s){R=r;S=s;}
+  string R;
+  string S;
+  connector (string r, string s){R=r;S=s;}
 };
+
+std::ostream& operator<<(std::ostream& os, const connector& c)
+{
+    return os << c.R << " " << c.S << " " << '\n';
+}
 
 std::vector<connector> circuit;
 
@@ -58,7 +63,8 @@ morecontentT2 : ')' | ',' contentT2 ')';
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
           {
-            //
+            circuit.push_back(connector(true,true));
+            circuit.push_back(connector($1,$2));
           }
           | connectors3 '(' contentT2 ',' contentT2 ','    contentT2 ')'
           {
@@ -93,8 +99,9 @@ int main() {
 
   yyparse();
 
-  for (int i=0; circuit.size() ; i++) {
-    std::cout << circuit[i].R << std::endl;
+  std::cout << circuit.size() << std::endl;
+  for(auto i:circuit){
+    std::cout << i << std::endl;
   }
   printf("Correct entry.\n");
 
