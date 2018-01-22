@@ -9,7 +9,7 @@ using namespace std;
 
 int yylex(void);
 void yyerror(const char *s);
-
+   
 struct connector {
   bool R;
   bool S;
