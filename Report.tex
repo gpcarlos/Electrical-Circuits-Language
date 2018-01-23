@@ -1,0 +1,88 @@
+\documentclass{article}
+\usepackage[spanish]{babel}
+\usepackage[final]{pdfpages}
+\usepackage{caption}
+\usepackage{geometry}
+\usepackage{fontspec}
+\usepackage{listings}
+\author{Juan Francisco Cabrera Sánchez \and Carlos Gallardo Polanco}
+\title{Lenguaje para la creación de circuitos eléctricos}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+Comencemos explicando cómo hemos llegado a nuestra solución para el léxico. En este apartado, se tuvo claro desde el primer momento que la definición de los tokens iría ligada a los tipos de componentes junto con las posibles tomas, es decir, \{S,R,G\}. Se pensó anteriormente que, además de los token mencionados, se podría añadir otro adicional que representase los cables, pero dado que este token añadiría una dificultad extra para el usuario, se decidió no incluir esta opción en la versión final del léxico. Por tanto, se presentan las opciones finalmente contempladas:
+
+\begin{table}[h!]
+  \centering
+  \begin{tabular}{|c|c|}
+    \hline
+    Token & Ejemplo \\ \hline
+  ``switch''+[0-9]$^*$ & switch11 \\ \hline
+  ``button''+[0-9]$^*$ & button0 \\ \hline
+  ``lamp''+[0-9]$^*$ & lamp4 \\ \hline
+  ``bell''+[0-9]$^*$ & bell7 \\ \hline
+  ``fuse''+[0-9]$^*$ & fuse1 \\ \hline
+  ``relay''+[0-9]$^*$ & relay134 \\ \hline
+  ``minute''+[0-9]$^*$ & minute4 \\ \hline
+  ``plug''+[0-9]$^*$ & plug6 \\ \hline
+  ``lock''+[0-9]$^*$ & lock2 \\ \hline
+  ``regulator''+[0-9]$^*$ & regulator8 \\ \hline
+  ``movDetector''+[0-9]$^*$ & movDetector9 \\ \hline
+  ``R'' & R \\ \hline
+  ``S'' & S \\ \hline
+  ``G'' & S \\ \hline
+  \end{tabular}
+  \caption{Palabras reservadas que se han contemplado}
+  \label{}
+\end{table}
+
+Definido ya el funcionamiento del léxico, se pasa a explicar a continuación cómo se ha desarrollado la gramática. Para un fácil desarrollo de la comprobación, se parte de una regla que jerárquicamente está por encima de todas las demás, a la que se denomina \emph{analyzer}. Desde esta regla, se llamará a la siguiente, que es \emph{circuit\_to\_analyze}, que puede tener componentes asociados o no. Esto se debe a que se contempla la opción de un circuito vacío y de haber llegado al máximo nivel de profundidad en la recursión. A partir de aquí, un componente se define como un conjunto de conectores diferenciados por el número de pines que se utilizan.
+
+\newpage
+
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[scale=0.60]{Analyzer.pdf}
+  \captionof{figure}{Versión reducida del árbol de recursión}
+\end{figure}
+
+En la figura anterior se muestra una versión muy reducida de nuestro árbol de recursión, pero sirve para hacerse una ligera idea del funcionamiento. Realmente, existen reglas intermedias que sirven para las conexiones de cada componente. Pongamos un ejemplo básico. $$\textit{lamp01(button01,button02)}$$
+
+En este caso, tenemos una regla inicial que es \textit{analyzer}, desde aquí, se va a \textit{circuit\_to\_analyze}, y como existe un componente, se pasa a la regla \textit{element}. Obsérvese que la lámpara es un componente con dos pines y, por lo tanto, en \textit{element} se llama a la regla \textit{connectors2}. Volviendo atrás, en la regla \textit{element} se llama del mismo modo a la regla \textit{contentT1} para los token button01 y button02. Estos pulsadores llamarán de forma recursiva a las reglas en las que se contemplan los distintos componentes electrónicos, para comprobar si están conectados a R o a S, verificando de este modo, que el circuito es correcto. Todo esto, se puede resumir en el código utilizado, que se puede observar en la siguiente página:
+
+\newpage
+
+\begin{lstlisting}[basicstyle=\footnotesize]
+
+analyzer : circuit_to_analyze;
+
+circuit_to_analyze : | element circuit_to_analyze ;
+
+connectors2 : BUTTON | LAMP | BELL | FUSE | LOCK ;
+connectors3 : SWITCH ;
+connectors2or3 : PLUG ;
+connectors6 : REGULATOR | MOVDETECTOR;
+connectors18 : RELAY | MINUTE;
+
+contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18  | R | S;
+contentT2 : contentT1 | G ;
+morecontentT1 : ')' | ',' contentT1 ',' contentT1 {limit+=2;} morecontentT1;
+morecontentT2 : ')' | ',' contentT2 ')';
+
+element : connectors2 '(' contentT1 ',' contentT1 ')'
+          | connectors3 '(' contentT2 ',' contentT2 ',' contentT2 ')'
+          | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
+          | connectors6 '(' contentT1 ',' contentT1 ',' contentT1 ','
+           contentT1 ',' contentT1 ',' contentT1 ')'
+          | connectors18 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 morecontentT1
+          {
+            limit += 4; if (limit>18) { std::cerr << "Error. Relay or Minute with "
+            << limit << " pins" << std::endl; error = true;} else {limit = 0;}
+          };
+
+
+\end{lstlisting}
+\end{document}

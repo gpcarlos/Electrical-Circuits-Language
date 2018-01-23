@@ -1,0 +1,162 @@
+\documentclass{article}
+\usepackage[spanish]{babel}
+\usepackage[final]{pdfpages}
+\usepackage{caption}
+\usepackage{geometry}
+\usepackage{minted}
+\usepackage{listings}
+\usepackage{array,makecell}
+\usepackage[inline]{enumitem}
+
+\usepackage[american,siunitx]{circuitikz}
+
+\author{Juan Francisco Cabrera Sánchez \and Carlos Gallardo Polanco}
+\title{Manual de Usuario}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+En primer lugar, se describen las palabras reservadas del lenguaje, que son las siguientes:
+
+\
+
+\begin{enumerate*}
+  \item[$\ $]\textit{switch}
+  \item[$\ $]\textit{button}
+  \item[$\ $]\textit{lamp}
+  \item[$\ $]\textit{bell}
+  \item[$\ $]\textit{fuse}
+  \item[$\ $]\textit{relay}
+  \item[$\ $]\textit{minute}
+  \item[$\ $]\textit{plug}
+  \item[$\ $]\textit{lock}
+  \item[$\ $]\textit{regulator}
+  \item[$\ $]\textit{movDetector}
+  \item[$\ $]\textit{R}
+  \item[$\ $]\textit{S}
+  \item[$\ $]\textit{G}
+\end{enumerate*}
+
+\
+
+Todas estas palabras reservadas, a excepción de R,S y G, pueden además, ir acompañadas de caracteres numéricos. Por tanto, en este lenguaje, se definen las instrucciones de la siguiente forma:
+
+$$ PalabraReservada \ ( PalabraReservada , \ PalabraReservada , ...) $$
+
+Cabe destacar que, a diferencia de muchos lenguajes, aquí no se utiliza el ';' como separador de instrucciones, sino que, cada instrucción está separada por espacios en blanco o por saltos de línea indistintamente.
+
+Como posiblemente conozca, en los circuitos eléctricos, existen diferencias entre el hecho de conectar varios componentes en serie o conectarlos en paralelo, como es el caso de las diferencias en la tensión o en la corriente.
+
+Por ello, se ha buscado, que resulte sencillo diferenciar cuándo varios componentes se conectan en serie o en paralelo. En este caso, es tan sencilo como que, dados un conjunto de componentes: $C_1,C_2,C_3, C_4,...,C_n$, si todos están conectados al mismo componente por la izquierda por una parte, y al mismo componente por la derecha por otra. Análogamente, se puede describir fácilmente cuándo un conjunto de componentes está conectado en serie. Dado un conjunto de componentes: $C_1,C_2,C_3, C_4,...,C_n$, diremos que están conectados en serie siempre que el componente que esté a la izquierda de $C_{n}$ sea $C_{n-1}$ y el componente que esté a la derecha de $C_{n-1}$ sea $C_{n}$. La mejor forma de comprobar esto es con un ejemplo:
+
+\begin{itemize}
+  \item En serie:
+  \begin{lstlisting}
+    lamp(R,button1)
+    button1(lamp,fuse2)
+    fuse2(button1, switch3)
+    switch3(fuse2, bell0)
+  \end{lstlisting}
+  \item En paralelo:
+  \begin{lstlisting}
+    switch(R,S)
+    lamp1(R,S)
+    button1(R,S)
+  \end{lstlisting}
+
+\end{itemize}
+
+Por tanto, hay 3 posibilidades, que el circuito sea un conjunto de componentes conectados en serie, que el circuito sea un conjunto de componentes conectados en paralelo o la más común, que el circuito sea una combinación de las dos anteriores. Esto se puede observar en el siguiente cuadro:
+\begin{table}[h!]
+  \centering
+  \begin{tabular}{| >{\centering\arraybackslash}m{3.5cm}
+    |>{\centering\arraybackslash}m{9cm}|}
+    \hline
+    Código & Output \\ \hline
+\begin{lstlisting}
+lamp0(R,lamp1)
+lamp1(lamp0,S)
+      \end{lstlisting} & \begin{circuitikz} \draw
+       (0,0)
+         to[short] (0,1)
+         to[short] (0,-1)
+          (0,0) node[label={[font=\footnotesize]left:R}] {}
+             to[short,o-] (1,0)
+             to[lamp,label={lamp0}] (2,0)
+          (2,0) -- (4,0)
+             to[lamp, -o, label={lamp1}] (6,0)
+          (6,0)node[label={[font=\footnotesize]right:S}] {}
+          (6,0)
+            to[short](6,1)
+            to[short](6,-1)
+          ;
+     \end{circuitikz}
+     \\ \hline
+     \begin{lstlisting}
+lamp0(R,S)
+lamp1(R,S)
+           \end{lstlisting} &
+           \begin{circuitikz} \draw
+                (0,0)
+                  to[short] (0,1)
+                  to[short] (0,-1)
+                (0,0) node[label={[font=\footnotesize]left:R}] {}
+                  to[short,o-o] (1,0)
+
+                 (1,0) -- (1,0)
+                   to[lamp,o-o,label={lamp0}] (3,0)
+                 (1,0) -- (1,1.5)
+                   to[lamp,label={lamp1}] (3,1.5)
+                 (3,1.5)
+                   to[short](3,0)
+                 (3,0)
+                   to[short,-o](4,0)
+                (4,0)node[label={[font=\footnotesize]right:S}] {}
+                (4,0)
+                  to[short](4,1)
+                  to[short](4,-1)
+                ;
+           \end{circuitikz}
+           \\ \hline
+           \begin{lstlisting}
+button(R,lamp0)
+lamp0(button,S)
+button1(R,lamp1)
+lamp1(button,S)
+                 \end{lstlisting} &
+                 \begin{circuitikz} \draw
+                   (0,0)
+                     to[short] (0,1)
+                     to[short] (0,-1)
+                      (0,0) node[label={[font=\footnotesize]left:R}] {}
+                         to[short,o-o] (1,0)
+                       (1,0) -- (1,0)
+                         to[push button,label=button] (3,0)
+                         to[lamp,label={lamp0}] (4,0)
+                       (1,0) -- (1,1.5)
+                         to[push button,label=button1] (3,1.5)
+                         to[lamp,label={lamp1}] (4,1.5)
+                         to[short](5,1.5)
+                       (5,1.5)
+                         to[short,-o](5,0)
+                       (4,0)
+                         to[short,-o](6,0)
+                      (6,0)node[label={[font=\footnotesize]right:S}] {}   (6,0)
+                        to[short](6,1)
+                        to[short](6,-1)
+                      ;
+
+                 \end{circuitikz}
+                 \\ \hline
+  \end{tabular}
+  \caption{Resumen de la sintaxis y la salida que produce.}
+  \label{}
+
+\end{table}
+
+
+
+
+
+\end{document}
