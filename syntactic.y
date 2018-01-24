@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 int yylex(void);
 void yyerror(const char *s);
@@ -9,22 +10,32 @@ void yyerror(const char *s);
 bool error = false;
 int limit = 0;
 
+struct connector {
+  bool R, S;
+};
+
+std::vector<connector> circuit;
+
 %}
 
-%token SWITCH
-%token BUTTON
-%token LAMP
-%token BELL
-%token FUSE
-%token RELAY
-%token MINUTE
-%token PLUG
-%token LOCK
-%token REGULATOR
-%token MOVDETECTOR
-%token R
-%token S
-%token G
+%union {
+  std::string * Tstring;
+}
+
+%token <Tstring> SWITCH
+%token <Tstring> BUTTON
+%token <Tstring> LAMP
+%token <Tstring> BELL
+%token <Tstring> FUSE
+%token <Tstring> RELAY
+%token <Tstring> MINUTE
+%token <Tstring> PLUG
+%token <Tstring> LOCK
+%token <Tstring> REGULATOR
+%token <Tstring> MOVDETECTOR
+%token <Tstring> R
+%token <Tstring> S
+%token <Tstring> G
 
 %token INVALID
 
@@ -36,18 +47,33 @@ analyzer : circuit_to_analyze;
 
 circuit_to_analyze : | element circuit_to_analyze ;
 
-connectors2 : BUTTON | LAMP | BELL | FUSE | LOCK ;
-connectors3 : SWITCH ;
-connectors2or3 : PLUG ;
-connectors6 : REGULATOR | MOVDETECTOR;
-connectors18 : RELAY | MINUTE;
+connectors2 : BUTTON {std::cout << *$1 << std::endl;}
+              | LAMP {std::cout << *$1 << std::endl;}
+              | BELL {std::cout << *$1 << std::endl;}
+              | FUSE {std::cout << *$1 << std::endl;}
+              | LOCK {std::cout << *$1 << std::endl;};
 
-contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18  | R | S;
-contentT2 : contentT1 | G ;
+connectors3 : SWITCH {std::cout << *$1 << std::endl;};
+
+connectors2or3 : PLUG {std::cout << *$1 << std::endl;};
+
+connectors6 : REGULATOR {std::cout << *$1 << std::endl;}
+              | MOVDETECTOR {std::cout << *$1 << std::endl;};
+
+connectors18 : RELAY {std::cout << *$1 << std::endl;}
+              | MINUTE {std::cout << *$1 << std::endl;};
+
+contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18  | R {std::cout << *$1 << std::endl;}
+              | S {std::cout << *$1 << std::endl;};
+
+contentT2 : contentT1 
+            | G {std::cout << *$1 << std::endl;};
+
 morecontentT1 : ')' | ',' contentT1 ',' contentT1 {limit+=2;} morecontentT1;
 morecontentT2 : ')' | ',' contentT2 ')';
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
+
           | connectors3 '(' contentT2 ',' contentT2 ',' contentT2 ')'
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
           | connectors6 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ')'
