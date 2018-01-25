@@ -7,7 +7,7 @@
 int yylex(void);
 void yyerror(const char *s);
 
-bool error = false;
+bool error = false, isAplug = false, noG = false;
 int limit = 0;
 
 struct connector {
@@ -50,41 +50,34 @@ analyzer : circuit_to_analyze;
 
 circuit_to_analyze : | element circuit_to_analyze ;
 
-connectors2 : BUTTON
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);}
-              | LAMP
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);}
-              | BELL
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);}
-              | FUSE
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);}
-              | LOCK
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);};
+connectors2 : BUTTON {aux.ctr.push_back(*$1);}
+              | LAMP {aux.ctr.push_back(*$1);}
+              | BELL {aux.ctr.push_back(*$1);}
+              | FUSE {aux.ctr.push_back(*$1);}
+              | LOCK {aux.ctr.push_back(*$1);};
 
-connectors3 : SWITCH
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);};
+connectors3 : SWITCH {aux.ctr.push_back(*$1); isAplug = false;};
 
-connectors2or3 : PLUG
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);};
+connectors2or3 : PLUG {aux.ctr.push_back(*$1); isAplug = true;};
 
-connectors6 : REGULATOR
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);}
-              | MOVDETECTOR
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);};
+connectors6 : REGULATOR {aux.ctr.push_back(*$1);}
+              | MOVDETECTOR {aux.ctr.push_back(*$1);};
 
-connectors18 : RELAY
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);}
-              | MINUTE
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1);};
+connectors18 : RELAY {aux.ctr.push_back(*$1);}
+              | MINUTE {aux.ctr.push_back(*$1);};
 
-contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18  | R
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1); aux.R=*$1;}
-              | S
-              {/*std::cout << *$1 << std::endl;*/ aux.ctr.push_back(*$1); aux.S=*$1;};
+contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18  | R {aux.ctr.push_back(*$1); aux.R=*$1;}
+              | S {aux.ctr.push_back(*$1); aux.S=*$1;}
+              | INVALID {error=true;};
 
-contentT2 : contentT1 | G {/*std::cout << *$1 << std::endl;*/};
+contentT2 : contentT1 {noG=true;}| G {aux.ctr.push_back(*$1);};
 
-morecontentT1 : ')' | ',' contentT1 ',' contentT1 {limit+=2;} morecontentT1;
+morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
+                | contentT1 ',' contentT1  ',' morecontentT1 {limit+=2;}
+                | contentT1 ')'
+                { limit+=1;
+                  std::string typeError = aux.ctr[0]+" has an odd number of pins";
+                  error = true; yyerror(typeError.c_str());};
 morecontentT2 : ')' | ',' contentT2 ')';
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
@@ -94,22 +87,92 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
           {circuit.push_back(aux); aux=connector();}
 
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
-          {circuit.push_back(aux); aux=connector();}
+          {circuit.push_back(aux); aux=connector();
+           if (isAplug&&noG) {
+             if (aux.ctr[3]!="G") {
+               std::string typeError = aux.ctr[0]+" is not connected to G";
+               error = true; yyerror(typeError.c_str());
+             }
+           }
+          }
 
           | connectors6 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ')'
           {circuit.push_back(aux); aux=connector();}
 
-          | connectors18 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 morecontentT1
-          {
-            circuit.push_back(aux); aux=connector();
-            limit += 4; if (limit>18) { std::cerr << "Error. Relay or Minute with " << limit << " pins" << std::endl; error = true;} else {limit = 0;}
+          | connectors18 '(' morecontentT1
+          {circuit.push_back(aux); aux=connector();
+           if (limit>18) {
+             std::string typeError = aux.ctr[0]+" has more than 18 pins";
+             error = true; yyerror(typeError.c_str());
+           } else {
+             if (limit<4) {
+               std::string typeError = aux.ctr[0]+" has less than 4 pins";
+               error = true; yyerror(typeError.c_str());
+             } else {limit = 0;}
+           }
           };
 
 
 %%
 
-void showCircuit () {
 
+bool lookforCable (std::string cable, std::string elem) {
+  if (cable == "R") {
+    std::vector<connector>::iterator it = circuit.begin();
+    bool found = false;
+    while (it!= circuit.end() && !found ) {
+      if (it->ctr[0]==elem) {
+        found = true;
+        if (it->ctr[1]=="R") { return true;}
+        else { return lookforCable("R",it->ctr[1]);}
+      }
+      ++it;
+    }
+    if (!found) {
+      return false;
+    }
+  } else { // cable == "S"
+    std::vector<connector>::iterator it = circuit.begin();
+    bool found = false;
+    while (it!= circuit.end() && !found ) {
+      if (it->ctr[0]==elem) {
+        found = true;
+        if (it->ctr[2]=="S") { return true;}
+        else { return lookforCable("S",it->ctr[2]);}
+      }
+      ++it;
+    }
+    if (!found) {
+      return false;
+    }
+  }
+}
+
+void checkCircuit () {
+  std::vector<connector>::iterator it = circuit.begin();
+
+  while (it!= circuit.end()) {
+      if (it->R=="nope") {
+        if (lookforCable("R",it->ctr[1])) {
+          it->R="R";
+        } else {
+          std::string typeError = it->ctr[0]+" is not connected to R";
+          error = true; yyerror(typeError.c_str());
+        }
+      }
+      if (it->S=="nope") {
+        if (lookforCable("S",it->ctr[2])) {
+          it->S="S";
+        } else {
+          std::string typeError = it->ctr[0]+" is not connected to S";
+          error = true; yyerror(typeError.c_str());
+        }
+      }
+    ++it;
+  }
+}
+
+void showCircuit () {
   std::vector<connector>::iterator it = circuit.begin();
 
   while (it!= circuit.end()) {
@@ -118,10 +181,9 @@ void showCircuit () {
       std::cout << *it2 << " ";
       ++it2;
     }
-    std::cout << " " << it->R << " " << it->S <<std::endl;
+    std::cout << "\t Connected to " << it->R << " and " << it->S <<std::endl;
     ++it;
   }
-
 }
 
 void yyerror(const char* s) {
@@ -132,11 +194,15 @@ int main() {
 
   yyparse();
 
+  checkCircuit();
+
   if (!error) {
     std::cout << "Correct entry" << std::endl;
+    std::cout << "This is the circuit: " << std::endl;
+    std::cout << "-----------------------------------------\n";
+    showCircuit();
+    std::cout << "-----------------------------------------\n";
   }
-
-  showCircuit();
 
   return 0;
 }
