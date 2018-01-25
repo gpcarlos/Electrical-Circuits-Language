@@ -1,0 +1,6 @@
+button0(R,lamp0)
+lamp0(button0,S)
+lamp1(button0,S)
+lamp2(button0,S)
+lamp3(lamp1,lamp2)
+plug0(button0,S,G)
