@@ -56,4 +56,4 @@ We offer a little guide and a report to those who want to know a little bit more
 ## Authors
 
 * **Juan Francisco Cabrera Sánchez** - *Github profile* - [JF95](https://github.com/JF95)
-* **Carlos Gallardo Polanco** - *Github profile* - [gccarlos95](https://github.com/gpcarlos95)
+* **Carlos Gallardo Polanco** - *Github profile* - [gpcarlos95](https://github.com/gpcarlos95)
