@@ -37,7 +37,7 @@ Practice of the subject Automata Theory and Formal Language. University of Cádi
   Finally, if you want to execute the analyzer, just type:
 
   ```bash
-  make exe
+  make exe FILE="CircuitName.circuit"
   ```
 
   The other option is:
