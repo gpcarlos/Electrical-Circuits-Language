@@ -7,7 +7,7 @@
 int yylex(void);
 void yyerror(const char *s);
 
-bool error = false, isAplug = false, noG = false;
+bool error = false, isAplug = false, withG = false;
 int limit = 0;
 
 struct connector {
@@ -70,7 +70,7 @@ contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connector
               | S {aux.ctr.push_back(*$1); aux.S=*$1;}
               | INVALID {error=true;};
 
-contentT2 : contentT1 {noG=true;}| G {aux.ctr.push_back(*$1);};
+contentT2 : contentT1 | G {aux.ctr.push_back(*$1); withG=true;};
 
 morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
                 | contentT1 ',' contentT1  ',' morecontentT1 {limit+=2;}
@@ -88,7 +88,7 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
 
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
           {circuit.push_back(aux); aux=connector();
-           if (isAplug&&noG) {
+           if (isAplug&&withG) {
              if (aux.ctr[3]!="G") {
                std::string typeError = aux.ctr[0]+" is not connected to G";
                error = true; yyerror(typeError.c_str());
