@@ -16,7 +16,7 @@ doc:
 	latexmk -c
 
 exe:
-	cat *.circuit | ./analyzer
+	cat ${FILE} | ./analyzer
 
 clean:
 	-rm -f analyzer syntactic.tab.c lex.yy.c syntactic.tab.h 2>/dev/null || true
