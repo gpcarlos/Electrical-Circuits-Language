@@ -81,8 +81,7 @@ morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
 morecontentT2 : ')' | ',' contentT2 ')';
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
-          {circuit.push_back(aux); aux=connector();} /*Aux reset*/
-
+          {circuit.push_back(aux); aux=connector();}
           | connectors3 '(' contentT2 ',' contentT2 ',' contentT2 ')'
           {circuit.push_back(aux); aux=connector();}
 
@@ -115,10 +114,27 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
 
 %%
 
+void checkDuplicates(){
+  auto element1 = circuit.begin();
+  while(element1 != circuit.end()){
+    auto element2 = element1+1;
+    while(element2!=circuit.end()){
+      if(element1->ctr[0] == element2->ctr[0]){
+        std::string typeError = element1->ctr[0]+ " is duplicated";
+        error=true;
+        yyerror(typeError.c_str());
+      }
+      ++element2;
+    }
+    ++element1;
+  }
+}
+
+
 
 bool lookforCable (std::string cable, std::string elem) {
   if (cable == "R") {
-    std::vector<connector>::iterator it = circuit.begin();
+    auto it = circuit.begin();
     bool found = false;
     while (it!= circuit.end() && !found ) {
       if (it->ctr[0]==elem) {
@@ -132,7 +148,7 @@ bool lookforCable (std::string cable, std::string elem) {
       return false;
     }
   } else { // cable == "S"
-    std::vector<connector>::iterator it = circuit.begin();
+    auto it = circuit.begin();
     bool found = false;
     while (it!= circuit.end() && !found ) {
       if (it->ctr[0]==elem) {
@@ -149,7 +165,7 @@ bool lookforCable (std::string cable, std::string elem) {
 }
 
 void checkCircuit () {
-  std::vector<connector>::iterator it = circuit.begin();
+  auto it = circuit.begin();
 
   while (it!= circuit.end()) {
       if (it->R=="nope") {
@@ -173,10 +189,10 @@ void checkCircuit () {
 }
 
 void showCircuit () {
-  std::vector<connector>::iterator it = circuit.begin();
+  auto it = circuit.begin();
 
   while (it!= circuit.end()) {
-    std::vector<std::string>::iterator it2 = it->ctr.begin();
+    auto it2 = it->ctr.begin();
     while (it2!=it->ctr.end()){
       std::cout << *it2 << " ";
       ++it2;
@@ -193,15 +209,16 @@ void yyerror(const char* s) {
 int main() {
 
   yyparse();
-
-  checkCircuit();
-
-  if (!error) {
-    std::cout << "Correct entry" << std::endl;
-    std::cout << "This is the circuit: " << std::endl;
-    std::cout << "-----------------------------------------\n";
-    showCircuit();
-    std::cout << "-----------------------------------------\n";
+  checkDuplicates();
+  if(!error){
+    checkCircuit();
+    if (!error) {
+      std::cout << "Correct entry" << std::endl;
+      std::cout << "This is the circuit: " << std::endl;
+      std::cout << "-----------------------------------------\n";
+      showCircuit();
+      std::cout << "-----------------------------------------\n";
+    }
   }
 
   return 0;
