@@ -1,6 +1,6 @@
 \documentclass{article}
-\usepackage[spanish]{babel}
-\usepackage[final]{pdfpages}
+\usepackage{polyglossia}
+\setmainlanguage{spanish}
 \usepackage{caption}
 \usepackage{geometry}
 \usepackage{fontspec}
@@ -45,7 +45,7 @@ Definido ya el funcionamiento del léxico, se pasa a explicar a continuación c�
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[scale=0.60]{Analyzer.pdf}
+  \includegraphics[scale=0.60]{Tree.pdf}
   \captionof{figure}{Versión reducida del árbol de recursión}
 \end{figure}
 
@@ -82,7 +82,6 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
             limit += 4; if (limit>18) { std::cerr << "Error. Relay or Minute with "
             << limit << " pins" << std::endl; error = true;} else {limit = 0;}
           };
-
-
 \end{lstlisting}
+
 \end{document}
