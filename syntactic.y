@@ -7,7 +7,7 @@
 int yylex(void);
 void yyerror(const char *s);
 
-bool error = false, isAplug = false, withG = false;
+bool error = false, isAplug = false, has3 = false;
 int limit = 0;
 
 struct connector {
@@ -70,7 +70,7 @@ contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connector
               | S {aux.ctr.push_back(*$1); aux.S=*$1;}
               | INVALID {error=true;};
 
-contentT2 : contentT1 | G {aux.ctr.push_back(*$1); withG=true;};
+contentT2 : contentT1 | G {aux.ctr.push_back(*$1);};
 
 morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
                 | contentT1 ',' contentT1  ',' morecontentT1 {limit+=2;}
@@ -78,7 +78,7 @@ morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
                 { limit+=1;
                   std::string typeError = aux.ctr[0]+" has an odd number of pins";
                   error = true; yyerror(typeError.c_str());};
-morecontentT2 : ')' | ',' contentT2 ')';
+morecontentT2 : ')' {has3=false;}| ',' contentT2 ')' {has3=true;};
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
           {circuit.push_back(aux); aux=connector();}
@@ -87,7 +87,7 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
 
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
           {circuit.push_back(aux); aux=connector();
-           if (isAplug&&withG) {
+           if (isAplug&&has3) {
              if (aux.ctr[3]!="G") {
                std::string typeError = aux.ctr[0]+" is not connected to G";
                error = true; yyerror(typeError.c_str());
@@ -115,9 +115,9 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
 %%
 
 void checkDuplicates(){
-  auto element1 = circuit.begin();
+  std::vector<connector>::iterator element1 = circuit.begin();
   while(element1 != circuit.end()){
-    auto element2 = element1+1;
+    std::vector<connector>::iterator element2 = element1+1;
     while(element2!=circuit.end()){
       if(element1->ctr[0] == element2->ctr[0]){
         std::string typeError = element1->ctr[0]+ " is duplicated";
@@ -134,7 +134,7 @@ void checkDuplicates(){
 
 bool lookforCable (std::string cable, std::string elem) {
   if (cable == "R") {
-    auto it = circuit.begin();
+    std::vector<connector>::iterator it = circuit.begin();
     bool found = false;
     while (it!= circuit.end() && !found ) {
       if (it->ctr[0]==elem) {
@@ -148,7 +148,7 @@ bool lookforCable (std::string cable, std::string elem) {
       return false;
     }
   } else { // cable == "S"
-    auto it = circuit.begin();
+    std::vector<connector>::iterator it = circuit.begin();
     bool found = false;
     while (it!= circuit.end() && !found ) {
       if (it->ctr[0]==elem) {
@@ -165,7 +165,7 @@ bool lookforCable (std::string cable, std::string elem) {
 }
 
 void checkCircuit () {
-  auto it = circuit.begin();
+  std::vector<connector>::iterator it = circuit.begin();
 
   while (it!= circuit.end()) {
       if (it->R=="nope") {
@@ -189,10 +189,10 @@ void checkCircuit () {
 }
 
 void showCircuit () {
-  auto it = circuit.begin();
+  std::vector<connector>::iterator it = circuit.begin();
 
   while (it!= circuit.end()) {
-    auto it2 = it->ctr.begin();
+    std::vector<std::string>::iterator it2 = it->ctr.begin();
     while (it2!=it->ctr.end()){
       std::cout << *it2 << " ";
       ++it2;
