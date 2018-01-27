@@ -4,9 +4,18 @@
 
 %}
 
+%x COMMENT
+
 %%
 
 [ \n\t\r]+
+
+"//".* 
+
+"/*"                 { BEGIN(COMMENT);}
+<COMMENT>"*/"        { BEGIN(INITIAL);}
+<COMMENT>\n          {}
+<COMMENT>.           {}
 
 "switch"+[0-9]*      {//printf("Found the token SWITCH: %s\n", yytext);
                      yylval.Tstring = new std::string(yytext);
