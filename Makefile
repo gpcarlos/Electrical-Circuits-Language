@@ -13,11 +13,11 @@ analyzer: flex bison
 doc:
 	@latexmk -pdf -xelatex -interaction=nonstopmode -shell-escape -use-make -quiet Report.tex
 	@latexmk -pdf -xelatex -interaction=nonstopmode -shell-escape -use-make -quiet Guide.tex
-	@rm -f *.bbl *.blg *.end *.fls *.log *.out *.fdb_latexmk 2>/dev/null
+	latexmk -c
 
 exe:
 	cat *.circuit | ./analyzer
 
 clean:
 	-rm -f analyzer syntactic.tab.c lex.yy.c syntactic.tab.h 2>/dev/null || true
-	-rm -f *.bbl *.blg *.aux *.end *.fls *.log *.out *.fdb_latexm 2>/dev/null || true
+	latexmk -c

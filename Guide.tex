@@ -6,14 +6,35 @@
 \usepackage{listings}
 \usepackage{array,makecell}
 \usepackage[inline]{enumitem}
-\usepackage[american]{circuitikz}
+\usepackage{circuitikz}
+\usepackage{color}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
 
-\author{Juan Francisco Cabrera Sánchez \and Carlos Gallardo Polanco}
+\author{Juan Francisco Cabrera Sánchez \and Carlos Gallardo Polanco \and \newline \url{https://github.com/gpcarlos95/Electrical-Circuits-Language}}
 \title{Manual de Usuario}
 \date{\today}
 
+
+\lstdefinestyle{bash}{
+    language=bash,
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,
+    breaklines=false,
+    captionpos=b,
+    keepspaces=true,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+
 \begin{document}
 \maketitle
+
+\section{Introducción}
 
 En primer lugar, se describen las palabras reservadas del lenguaje, que son las siguientes:
 
@@ -56,6 +77,9 @@ Por ello, se ha buscado, que resulte sencillo diferenciar cuándo varios compone
     fuse2(button1, switch3)
     switch3(fuse2, bell0)
   \end{lstlisting}
+
+  \
+
   \item En paralelo:
   \begin{lstlisting}
     switch(R,S)
@@ -144,12 +168,55 @@ lamp1(button,S)
                         to[short](6,1)
                         to[short](6,-1)
                       ;
-
                  \end{circuitikz}
                  \\ \hline
   \end{tabular}
   \caption{Resumen de la sintaxis y la salida que produce.}
-  \label{}
-
+  \label{tab:Resumen}
 \end{table}
+
+Se deben tener las siguientes consideraciones a la hora de programar: no se permite la redefinición de componentes, es decir, si se intenta definir dos veces el mismo componente, habrá un mensaje de error indicando qué componente está repetido, considerándose el circuito inválido por este motivo. Y por último, recuerde que el circuito debe quedar cerrado, si no lo está, se considerará inválido y se notificará con el mensaje de error correspondiente.
+
+
+\
+
+\section{Compilación y ejecución}
+
+\lstset{style=bash}
+
+A partir de aquí se le explicará cómo compilar su circuito, y se le dan dos opciones:
+\begin{itemize}
+\item Usando el makefile:
+  \begin{lstlisting}
+  Para compilarlo todo:
+    make
+
+  Para compilar el léxico:
+    make flex
+
+  Para compilar la semántica:
+    make bison
+
+  Para compilar, enlazar y generar un ejecutable:
+    make analyzer
+
+  Para ejecutar el analizador:
+    make exe
+\end{lstlisting}
+\item Sin usar el makefile:
+\begin{lstlisting}[basicstyle=\footnotesize]{language=bash}
+  Para compilar el léxico:
+    flex lexicon.l
+
+  Para compilar la semántica:
+    bison -d syntactic.y
+
+  Para compilar, enlazar y generar un ejecutable:
+    g++ lex.yy.c syntactic.tab.c -o analyzer -lfl -lm
+
+  Para ejecutar el analizador:
+    cat NombreDelCircuito.circuit | ./analyzer
+
+\end{lstlisting}
+\end{itemize}
 \end{document}
