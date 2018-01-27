@@ -51,37 +51,88 @@ Definido ya el funcionamiento del léxico, se pasa a explicar a continuación c�
 
 En la figura anterior se muestra una versión muy reducida de nuestro árbol de recursión, pero sirve para hacerse una ligera idea del funcionamiento. Realmente, existen reglas intermedias que sirven para las conexiones de cada componente. Pongamos un ejemplo básico. $$\textit{lamp01(button01,button02)}$$
 
-En este caso, tenemos una regla inicial que es \textit{analyzer}, desde aquí, se va a \textit{circuit\_to\_analyze}, y como existe un componente, se pasa a la regla \textit{element}. Obsérvese que la lámpara es un componente con dos pines y, por lo tanto, en \textit{element} se llama a la regla \textit{connectors2}. Volviendo atrás, en la regla \textit{element} se llama del mismo modo a la regla \textit{contentT1} para los token button01 y button02. Estos pulsadores llamarán de forma recursiva a las reglas en las que se contemplan los distintos componentes electrónicos, para comprobar si están conectados a R o a S, verificando de este modo, que el circuito es correcto. Todo esto, se puede resumir en el código utilizado, que se puede observar en la siguiente página:
+En este caso, tenemos una regla inicial que es \textit{analyzer}, desde aquí, se va a \textit{circuit\_to\_analyze}, y como existe un componente, se pasa a la regla \textit{element}. Obsérvese que la lámpara es un componente con dos pines y, por lo tanto, en \textit{element} se llama a la regla \textit{connectors2}. Volviendo atrás, en la regla \textit{element} se llama del mismo modo a la regla \textit{contentT1} para los token button01 y button02. Estos pulsadores llamarán de forma recursiva a las reglas en las que se contemplan los distintos componentes electrónicos, para comprobar si están conectados a R o a S, verificando de este modo, que el circuito es correcto.
+
+Entrando un poco más en la implementación, se ha utilizado una estructura a la que se ha denomidado \texttt{connector}, que contiene un vector en el que se guardan el nombre de los elementos y los componentes a los que están conectados, junto con dos variables \texttt{R} y \texttt{S}, que indican si el elemento en cuestión, está conectado a dichas tomas. Por tanto, el vector de \texttt{connector} representa el circuito completo.
+
+Se utiliza además esta estructura de datos para comprobar que el circuito es correcto de dos formas, la primera es que no haya componentes definidos con el mismo nombre y segundo, comprobando que cada elemento está conectado a R y a S. Todo esto, se puede resumir en el código utilizado, que se puede observar en la siguiente página:
 
 \newpage
 
-\begin{lstlisting}[basicstyle=\footnotesize]
+\newgeometry{left=2.5cm,bottom=1.5cm, top=1.5cm, right=2.5cm}
 
+\begin{lstlisting}[basicstyle=\footnotesize]
 analyzer : circuit_to_analyze;
 
 circuit_to_analyze : | element circuit_to_analyze ;
 
-connectors2 : BUTTON | LAMP | BELL | FUSE | LOCK ;
-connectors3 : SWITCH ;
-connectors2or3 : PLUG ;
-connectors6 : REGULATOR | MOVDETECTOR;
-connectors18 : RELAY | MINUTE;
+connectors2 : BUTTON {aux.ctr.push_back(*$1);}
+              | LAMP {aux.ctr.push_back(*$1);}
+              | BELL {aux.ctr.push_back(*$1);}
+              | FUSE {aux.ctr.push_back(*$1);}
+              | LOCK {aux.ctr.push_back(*$1);};
 
-contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18  | R | S;
-contentT2 : contentT1 | G ;
-morecontentT1 : ')' | ',' contentT1 ',' contentT1 {limit+=2;} morecontentT1;
-morecontentT2 : ')' | ',' contentT2 ')';
+connectors3 : SWITCH {aux.ctr.push_back(*$1); isAplug = false;};
+
+connectors2or3 : PLUG {aux.ctr.push_back(*$1); isAplug = true;};
+
+connectors6 : REGULATOR {aux.ctr.push_back(*$1);}
+              | MOVDETECTOR {aux.ctr.push_back(*$1);};
+
+connectors18 : RELAY {aux.ctr.push_back(*$1);}
+              | MINUTE {aux.ctr.push_back(*$1);};
+
+contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18
+              | R {aux.ctr.push_back(*$1); aux.R=*$1;}
+              | S {aux.ctr.push_back(*$1); aux.S=*$1;}
+              | INVALID {error=true;};
+
+contentT2 : contentT1 | G {aux.ctr.push_back(*$1);};
+
+morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
+                | contentT1 ',' contentT1  ',' morecontentT1 {limit+=2;}
+                | contentT1 ')'
+                { limit+=1;
+                  std::string typeError = aux.ctr[0]+" has an odd number of pins";
+                  error = true; yyerror(typeError.c_str());};
+morecontentT2 : ')' {has3=false;}| ',' contentT2 ')' {has3=true;};
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
+          {circuit.push_back(aux); aux=connector();}
           | connectors3 '(' contentT2 ',' contentT2 ',' contentT2 ')'
+          {circuit.push_back(aux); aux=connector();}
+
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
+          {circuit.push_back(aux); aux=connector();
+           if (isAplug&&has3) {
+             if (aux.ctr[3]!="G") {
+               std::string typeError = aux.ctr[0]+" is not connected to G";
+               error = true; yyerror(typeError.c_str());
+             }
+           }
+          }
+
           | connectors6 '(' contentT1 ',' contentT1 ',' contentT1 ','
-           contentT1 ',' contentT1 ',' contentT1 ')'
-          | connectors18 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 morecontentT1
-          {
-            limit += 4; if (limit>18) { std::cerr << "Error. Relay or Minute with "
-            << limit << " pins" << std::endl; error = true;} else {limit = 0;}
-          };
+                            contentT1 ',' contentT1 ',' contentT1 ')'
+          {circuit.push_back(aux); aux=connector();}
+
+          | connectors18 '(' morecontentT1
+          {circuit.push_back(aux); aux=connector();
+           if (limit>18) {
+             std::string typeError = aux.ctr[0]+" has more than 18 pins";
+             error = true; yyerror(typeError.c_str());
+           } else {
+             if (limit<4) {
+               std::string typeError = aux.ctr[0]+" has less than 4 pins";
+               error = true; yyerror(typeError.c_str());
+             } else {limit = 0;}
+           }
+          }
 \end{lstlisting}
+
+\restoregeometry
+
+\newpage
+
 
 \end{document}
