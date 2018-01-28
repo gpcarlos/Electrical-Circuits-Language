@@ -58,9 +58,8 @@ connectors2 : BUTTON {aux.ctr.push_back(*$1);}
               | FUSE {aux.ctr.push_back(*$1);}
               | LOCK {aux.ctr.push_back(*$1);};
 
-connectors3 : SWITCH {aux.ctr.push_back(*$1); isAplug = false;};
-
-connectors2or3 : PLUG {aux.ctr.push_back(*$1); isAplug = true;};
+connectors2or3 : PLUG {aux.ctr.push_back(*$1); isAplug = true;}
+                 | SWITCH {aux.ctr.push_back(*$1); isAplug = false;};
 
 connectors6 : REGULATOR {aux.ctr.push_back(*$1);}
               | MOVDETECTOR {aux.ctr.push_back(*$1);};
@@ -68,7 +67,7 @@ connectors6 : REGULATOR {aux.ctr.push_back(*$1);}
 connectors18 : RELAY {aux.ctr.push_back(*$1);}
               | MINUTE {aux.ctr.push_back(*$1);};
 
-contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18  | R {aux.ctr.push_back(*$1); aux.R=*$1;}
+contentT1 : connectors2 | connectors2or3 | connectors6 | connectors18  | R {aux.ctr.push_back(*$1); aux.R=*$1;}
               | S {aux.ctr.push_back(*$1); aux.S=*$1;}
               | INVALID {error=true;};
 
@@ -83,8 +82,6 @@ morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
 morecontentT2 : ')' {has3=false;}| ',' contentT2 ')' {has3=true;};
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
-          {circuit.push_back(aux); aux=connector();}
-          | connectors3 '(' contentT2 ',' contentT2 ',' contentT2 ')'
           {circuit.push_back(aux); aux=connector();}
 
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
