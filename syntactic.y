@@ -78,7 +78,7 @@ morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
                 | contentT1 ')'
                 { limit+=1;
                   std::string typeError = aux.ctr[0]+" has an odd number of pins";
-                  error = true; yyerror(typeError.c_str());};
+                  yyerror(typeError.c_str());};
 morecontentT2 : ')' {has3=false;}| ',' contentT2 ')' {has3=true;};
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
@@ -89,7 +89,7 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
            if (isAplug&&has3) {
              if (aux.ctr[3]!="G") {
                std::string typeError = aux.ctr[0]+" is not connected to G";
-               error = true; yyerror(typeError.c_str());
+               yyerror(typeError.c_str());
              }
            }
           }
@@ -101,11 +101,11 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
           {circuit.push_back(aux); aux=connector();
            if (limit>18) {
              std::string typeError = aux.ctr[0]+" has more than 18 pins";
-             error = true; yyerror(typeError.c_str());
+             yyerror(typeError.c_str());
            } else {
              if (limit<4) {
                std::string typeError = aux.ctr[0]+" has less than 4 pins";
-               error = true; yyerror(typeError.c_str());
+               yyerror(typeError.c_str());
              } else {limit = 0;}
            }
           };
@@ -120,7 +120,6 @@ void checkDuplicates(){
     while(element2!=circuit.end()){
       if(element1->ctr[0] == element2->ctr[0]){
         std::string typeError = element1->ctr[0]+ " is duplicated";
-        error=true;
         yyerror(typeError.c_str());
       }
       ++element2;
@@ -172,7 +171,7 @@ void checkCircuit () {
           it->R="R";
         } else {
           std::string typeError = it->ctr[0]+" is not connected to R";
-          error = true; yyerror(typeError.c_str());
+          yyerror(typeError.c_str());
         }
       }
       if (it->S=="nope") {
@@ -180,7 +179,7 @@ void checkCircuit () {
           it->S="S";
         } else {
           std::string typeError = it->ctr[0]+" is not connected to S";
-          error = true; yyerror(typeError.c_str());
+          yyerror(typeError.c_str());
         }
       }
     ++it;
@@ -203,6 +202,7 @@ void showCircuit () {
 
 void yyerror(const char* s) {
   std::cerr << "Error " << s << std::endl;
+  error = true;
 }
 
 int main() {
