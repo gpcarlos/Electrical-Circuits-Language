@@ -10,11 +10,6 @@ flex: lexicon.l
 analyzer: flex bison
 	g++ lex.yy.c syntactic.tab.c -o analyzer -lfl -lm
 
-doc:
-	@latexmk -pdf -xelatex -interaction=nonstopmode -shell-escape -use-make -quiet Report.tex
-	@latexmk -pdf -xelatex -interaction=nonstopmode -shell-escape -use-make -quiet Guide.tex
-	latexmk -c
-
 exe:
 	cat ${FILE} | ./analyzer
 

@@ -10,7 +10,7 @@
 
 [ \n\t\r]+
 
-"//".* 
+"//".*
 
 "/*"                 { BEGIN(COMMENT);}
 <COMMENT>"*/"        { BEGIN(INITIAL);}
@@ -26,6 +26,9 @@
 "lamp"+[0-9]*        {//printf("Found the token LAMP: %s\n", yytext);
                      yylval.Tstring = new std::string(yytext);
                      return(LAMP);}
+"sensor"+[0-9]*      {//printf("Found the token SENSOR: %s\n", yytext);
+                     yylval.Tstring = new std::string(yytext);
+                     return(SENSOR);}
 "bell"+[0-9]*        {//printf("Found the token BELL: %s\n", yytext);
                      yylval.Tstring = new std::string(yytext);
                      return(BELL);}
