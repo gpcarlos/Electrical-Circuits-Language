@@ -46,13 +46,6 @@ Practice of the subject Automata Theory and Formal Language. University of Cádi
   cat CircuitName.circuit | ./analyzer
   ```
 
-## Documentation
-We offer a little guide and a report to those who want to know a little bit more about the design of this language, its building process or its syntax. Also, if you want to compile the tex file to generate the document, just type in your terminal:
-
-```bash
-  make doc
-```
-
 ## Authors
 
 * **Juan Francisco Cabrera Sánchez** - *Github profile* - [JF95](https://github.com/JF95)

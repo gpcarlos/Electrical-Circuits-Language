@@ -28,6 +28,7 @@ std::vector<connector> circuit;
 %token <Tstring> SWITCH
 %token <Tstring> BUTTON
 %token <Tstring> LAMP
+%token <Tstring> SENSOR
 %token <Tstring> BELL
 %token <Tstring> FUSE
 %token <Tstring> RELAY
@@ -52,6 +53,7 @@ circuit_to_analyze : | element circuit_to_analyze ;
 
 connectors2 : BUTTON {aux.ctr.push_back(*$1);}
               | LAMP {aux.ctr.push_back(*$1);}
+              | SENSOR {aux.ctr.push_back(*$1);}
               | BELL {aux.ctr.push_back(*$1);}
               | FUSE {aux.ctr.push_back(*$1);}
               | LOCK {aux.ctr.push_back(*$1);};
