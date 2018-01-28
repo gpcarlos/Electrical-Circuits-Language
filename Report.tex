@@ -4,7 +4,15 @@
 \usepackage{caption}
 \usepackage{geometry}
 \usepackage{fontspec}
-\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{minted}
+\setminted{
+  style=colorful,
+  linenos=true,
+  fontsize=\small,
+  tabsize=2,
+  breaklines,
+}
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
 \author{Juan Francisco Cabrera Sánchez \and Carlos Gallardo Polanco \and \newline \url{https://github.com/gpcarlos95/Electrical-Circuits-Language}}
@@ -24,6 +32,7 @@ Comencemos explicando cómo hemos llegado a nuestra solución para el léxico. E
   ``switch''+[0-9]$^*$ & switch11 \\ \hline
   ``button''+[0-9]$^*$ & button0 \\ \hline
   ``lamp''+[0-9]$^*$ & lamp4 \\ \hline
+  ``sensor''+[0-9]$^*$ & sensor666 \\ \hline
   ``bell''+[0-9]$^*$ & bell7 \\ \hline
   ``fuse''+[0-9]$^*$ & fuse1 \\ \hline
   ``relay''+[0-9]$^*$ & relay134 \\ \hline
@@ -61,22 +70,20 @@ Se utiliza además esta estructura de datos para comprobar que el circuito es co
 
 \newpage
 
-\newgeometry{left=2.5cm,bottom=1.5cm, top=1.5cm, right=2.5cm}
-
-\begin{lstlisting}[basicstyle=\footnotesize]
+\begin{minted}[firstnumber=50]{cpp}
 analyzer : circuit_to_analyze;
 
 circuit_to_analyze : | element circuit_to_analyze ;
 
 connectors2 : BUTTON {aux.ctr.push_back(*$1);}
               | LAMP {aux.ctr.push_back(*$1);}
+              | SENSOR {aux.ctr.push_back(*$1);}
               | BELL {aux.ctr.push_back(*$1);}
               | FUSE {aux.ctr.push_back(*$1);}
               | LOCK {aux.ctr.push_back(*$1);};
 
-connectors3 : SWITCH {aux.ctr.push_back(*$1); isAplug = false;};
-
-connectors2or3 : PLUG {aux.ctr.push_back(*$1); isAplug = true;};
+connectors2or3 : PLUG {aux.ctr.push_back(*$1); isAplug = true;}
+                 | SWITCH {aux.ctr.push_back(*$1); isAplug = false;};
 
 connectors6 : REGULATOR {aux.ctr.push_back(*$1);}
               | MOVDETECTOR {aux.ctr.push_back(*$1);};
@@ -84,8 +91,7 @@ connectors6 : REGULATOR {aux.ctr.push_back(*$1);}
 connectors18 : RELAY {aux.ctr.push_back(*$1);}
               | MINUTE {aux.ctr.push_back(*$1);};
 
-contentT1 : connectors2 | connectors3 | connectors2or3 | connectors6 | connectors18
-              | R {aux.ctr.push_back(*$1); aux.R=*$1;}
+contentT1 : connectors2 | connectors2or3 | connectors6 | connectors18  | R {aux.ctr.push_back(*$1); aux.R=*$1;}
               | S {aux.ctr.push_back(*$1); aux.S=*$1;}
               | INVALID {error=true;};
 
@@ -101,8 +107,6 @@ morecontentT2 : ')' {has3=false;}| ',' contentT2 ')' {has3=true;};
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
           {circuit.push_back(aux); aux=connector();}
-          | connectors3 '(' contentT2 ',' contentT2 ',' contentT2 ')'
-          {circuit.push_back(aux); aux=connector();}
 
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
           {circuit.push_back(aux); aux=connector();
@@ -114,8 +118,7 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
            }
           }
 
-          | connectors6 '(' contentT1 ',' contentT1 ',' contentT1 ','
-                            contentT1 ',' contentT1 ',' contentT1 ')'
+          | connectors6 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ')'
           {circuit.push_back(aux); aux=connector();}
 
           | connectors18 '(' morecontentT1
@@ -129,10 +132,8 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
                error = true; yyerror(typeError.c_str());
              } else {limit = 0;}
            }
-          }
-\end{lstlisting}
-
-\restoregeometry
+          };
+\end{minted}
 
 \newpage
 
