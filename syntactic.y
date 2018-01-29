@@ -206,7 +206,10 @@ void yyerror(const char* s) {
   if (error)
     std::cerr << "Error " << s << std::endl;
   else {
-    std::cerr << "Error " << s << " in the element " << aux.ctr[0] << std::endl;
+    if (aux.ctr.size()!=0)
+      std::cerr << "Error " << s << " in the element " << aux.ctr[0] << std::endl;
+    else
+      std::cerr << "Error " << s << std::endl;
     error = true;
   }
 }
