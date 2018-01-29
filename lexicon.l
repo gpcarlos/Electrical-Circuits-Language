@@ -63,6 +63,10 @@
 "G"                  {//printf("Found the token G: %s\n", yytext);
                      yylval.Tstring = new std::string(yytext);
                      return(G);}
+"junction"+[0-9]*    {//printf("Found the token JUNCTION: %s\n", yytext);
+                     yylval.Tstring = new std::string(yytext);
+                     return(JUNCTION);}
+
 
 [(),]                {//printf("Found the symbol: %s\n", yytext);
                      return(*yytext);}
