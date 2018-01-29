@@ -69,7 +69,7 @@ En primer lugar, se describen las palabras reservadas del lenguaje, que son las 
 
 Todas estas palabras reservadas, a excepción de R, S y G, pueden además, ir acompañadas de caracteres numéricos. Por tanto, en este lenguaje, se definen las instrucciones de la siguiente forma:
 
-\begin{center} PalabraReservada  (PalabraReservada, PalabraReservada, ...) \end{center}
+\begin{center} \texttt{PalabraReservada  (PalabraReservada, PalabraReservada, ...)} \end{center}
 
 Cabe destacar que, a diferencia de muchos lenguajes, aquí no se utiliza el ';' como separador de instrucciones, sino que, cada instrucción está separada por espacios en blanco o por saltos de línea indistintamente.
 
@@ -185,7 +185,7 @@ lamp1(button1,S)
 
 Se deben tener las siguientes consideraciones a la hora de programar: no se permite la redefinición de componentes, es decir, si se intenta definir dos veces el mismo componente, habrá un mensaje de error indicando qué componente está repetido, considerándose el circuito inválido por este motivo. Recuerde además, que el circuito debe quedar cerrado, si no lo está, se considerará inválido y se notificará con el mensaje de error correspondiente.
 
-Y, la más importante, a la hora de definir los elementos, todos tendrán como mínimo dos conexiones, ya que deben estar conectados a las tomas R y S. Puede estar conectado de forma directa o a través de otro elemento, pero el primer elemento al que se conecta debe ser R o a un elemento que conduzca a R y lo mismo ocurre con el segundo elemento, solo que esta vez, en lugar de con R es con S. Los siguientes elementos (si los tiene) a los que se conecta no deben seguir ningún criterio específico sobre el orden, a excepción del enchufe(plug) cuyo tercer conector sólo puede ir a tierra(G). Puede ver de forma más clara en el cuadro \ref{tab:TablaConectores} los conectores que puede definir su correspondiente número de conectores.
+Y, la más importante, a la hora de definir los elementos, todos tendrán como mínimo dos conexiones, ya que deben estar conectados a las tomas R y S. Puede estar conectado de forma directa o a través de otro elemento, pero el primer elemento al que se conecta debe ser R o a un elemento que conduzca a R y lo mismo ocurre con el segundo elemento, solo que esta vez, en lugar de con R es con S. Los siguientes elementos (si los tiene) a los que se conecta no deben seguir ningún criterio específico sobre el orden, a excepción del enchufe(plug) cuyo tercer conector sólo puede ir a tierra(G). Puede ver de forma más clara en el cuadro \ref{tab:TablaConectores} los conectores que puede definir, junto con su correspondiente número de conectores.
 
 \begin{table}[h!]
   \centering
@@ -237,6 +237,9 @@ A partir de aquí se le explicará cómo compilar su circuito, y se le dan dos o
   Para ejecutar el analizador:
     make exe FILE="NombreDelCircuito.circuit"
 \end{lstlisting}
+
+\newpage
+
 \item Sin usar el makefile:
 \begin{lstlisting}[basicstyle=\footnotesize]{language=bash}
   Para compilar el léxico:

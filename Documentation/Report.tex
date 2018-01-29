@@ -9,7 +9,7 @@
 \setminted{
   style=colorful,
   linenos=true,
-  fontsize=\small,
+  fontsize=\footnotesize,
   tabsize=2,
   breaklines,
 }
@@ -69,6 +69,8 @@ Entrando un poco más en la implementación, se ha utilizado una estructura a la
 Se utiliza además esta estructura de datos para comprobar que el circuito es correcto de dos formas, la primera es que no haya componentes definidos con el mismo nombre y segundo, comprobando que cada elemento está conectado a R y a S. Todo esto, se puede resumir en el código utilizado, que se puede observar en la siguiente página:
 
 \newpage
+
+\newgeometry{left=2.5cm,bottom=3.5cm, top=2.5cm, right=3.0cm}
 
 \begin{minted}[firstnumber=50]{cpp}
 analyzer : circuit_to_analyze;
@@ -135,7 +137,8 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
           };
 \end{minted}
 
-\newpage
+\restoregeometry
+
 
 
 \end{document}
