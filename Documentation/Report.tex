@@ -5,6 +5,7 @@
 \usepackage{geometry}
 \usepackage{fontspec}
 \usepackage{graphicx}
+\usepackage{tikz}
 \usepackage{minted}
 \setminted{
   style=colorful,
@@ -13,8 +14,10 @@
   tabsize=2,
   breaklines,
 }
+\usepackage{pdflscape}
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
+\usepackage{forest}
 \author{Juan Francisco Cabrera Sánchez \and Carlos Gallardo Polanco \and \newline \url{https://github.com/gpcarlos95/Electrical-Circuits-Language}}
 \title{Lenguaje para la creación de circuitos eléctricos}
 \date{\today}
@@ -22,6 +25,7 @@
 \begin{document}
 \maketitle
 
+\section{Introducción}
 Comencemos explicando cómo hemos llegado a nuestra solución para el léxico. En este apartado, se tuvo claro desde el primer momento que la definición de los tokens iría ligada a los tipos de componentes junto con las posibles tomas, es decir, \{S,R,G\}. Se pensó anteriormente que, además de los token mencionados, se podría añadir otro adicional que representase los cables, pero dado que este token añadiría una dificultad extra para el usuario, se decidió no incluir esta opción en la versión final del léxico. Por tanto, se presentan las opciones finalmente contempladas:
 
 \begin{table}[h!]
@@ -41,6 +45,7 @@ Comencemos explicando cómo hemos llegado a nuestra solución para el léxico. E
   ``lock''+[0-9]$^*$ & lock2 \\ \hline
   ``regulator''+[0-9]$^*$ & regulator8 \\ \hline
   ``movDetector''+[0-9]$^*$ & movDetector9 \\ \hline
+  ``junction''+[0-9]$^*$ & junction102 \\ \hline
   ``R'' & R \\ \hline
   ``S'' & S \\ \hline
   ``G'' & S \\ \hline
@@ -51,19 +56,59 @@ Comencemos explicando cómo hemos llegado a nuestra solución para el léxico. E
 
 Definido ya el funcionamiento del léxico, se pasa a explicar a continuación cómo se ha desarrollado la gramática. Para un fácil desarrollo de la comprobación, se parte de una regla que jerárquicamente está por encima de todas las demás, a la que se denomina \emph{analyzer}. Desde esta regla, se llamará a la siguiente, que es \emph{circuit\_to\_analyze}, que puede tener componentes asociados o no. Esto se debe a que se contempla la opción de un circuito vacío y de haber llegado al máximo nivel de profundidad en la recursión. A partir de aquí, un componente se define como un conjunto de conectores diferenciados por el número de pines que se utilizan.
 
-\newpage
-
+\usetikzlibrary{shadows,arrows.meta,automata,positioning}
+\tikzset{parent/.style={align=center,text width=2cm,rounded corners=2pt},
+    child/.style={align=center,text width=2cm,rounded corners=6pt},
+    grandchild/.style={text width=2.3cm}
+}
 
 \begin{figure}[h!]
-  \centering
-  \includegraphics[scale=0.60]{Tree.pdf}
-  \captionof{figure}{Versión reducida del árbol de recursión}
+\begin{center}
+\scalebox{0.65}{
+\begin{forest}
+for tree={
+  treenode/.style = {align=center, inner sep=3pt,
+        text centered, ellipse, draw, font=\sffamily},
+  blue-arrow/.style = {draw=blue!20},
+  edge=-{stealth}}
+[analyzer, treenode
+  [circuit\_to\_analyze, treenode
+      [element, treenode
+      [connectors2, treenode,before computing xy={l=10mm,s-200mm}                    %y     %x
+        [BUTTON, treenode,before computing xy={l=-15mm,s=-12mm}]
+        [LAMP, treenode ,before computing xy={l=-15mm,s=10mm}]
+        [SENSOR, treenode ,before computing xy={l=-8mm,s=-30mm}]
+        [BELL, treenode,before computing xy={l=5mm,s=-25mm}]
+        [FUSE, treenode,before computing xy={l=15mm,s=-20mm}]
+        [LOCK, treenode,before computing xy={l=15mm,s=-2mm}]
+        [JUNCTION, treenode,before computing xy={l=15mm,s=21mm}]
+      ]
+      [connectors3, treenode,before computing xy={l=20mm,s=-60mm}
+        [PLUG, treenode]
+        [SWITCH, treenode]
+      ]
+      [connectors6,treenode,before computing xy={l=15mm,s=-0mm}
+        [REGULATOR,treenode]
+        [MOVDETECTOR,treenode]
+      ]
+      [connectors18,treenode,before computing xy={l=20mm,s=60mm}
+        [RELAY,treenode]
+        [MINUTE,treenode]
+      ]
+    ]
+  ]
+]
+\end{forest}
+}
+\end{center}
+\caption{Versión reducida del árbol de recursión}
 \end{figure}
 
 En la figura anterior se muestra una versión muy reducida de nuestro árbol de recursión, pero sirve para hacerse una ligera idea del funcionamiento. Realmente, existen reglas intermedias que sirven para las conexiones de cada componente. Pongamos un ejemplo básico. $$\textit{lamp01(button01,button02)}$$
 
 En este caso, tenemos una regla inicial que es \textit{analyzer}, desde aquí, se va a \textit{circuit\_to\_analyze}, y como existe un componente, se pasa a la regla \textit{element}. Obsérvese que la lámpara es un componente con dos pines y, por lo tanto, en \textit{element} se llama a la regla \textit{connectors2}. Volviendo atrás, en la regla \textit{element} se llama del mismo modo a la regla \textit{contentT1} para los token button01 y button02. Estos pulsadores llamarán de forma recursiva a las reglas en las que se contemplan los distintos componentes electrónicos, para comprobar si están conectados a R o a S, verificando de este modo, que el circuito es correcto.
 
+\section{Implementación}
 Entrando un poco más en la implementación, se ha utilizado una estructura a la que se ha denomidado \texttt{connector}, que contiene un vector en el que se guardan el nombre de los elementos y los componentes a los que están conectados, junto con dos variables \texttt{R} y \texttt{S}, que indican si el elemento en cuestión, está conectado a dichas tomas. Por tanto, el vector de \texttt{connector} representa el circuito completo.
 
 Se utiliza además esta estructura de datos para comprobar que el circuito es correcto de dos formas, la primera es que no haya componentes definidos con el mismo nombre y segundo, comprobando que cada elemento está conectado a R y a S. Todo esto, se puede resumir en el código utilizado, que se puede observar en la siguiente página:
@@ -82,7 +127,8 @@ connectors2 : BUTTON {aux.ctr.push_back(*$1);}
               | SENSOR {aux.ctr.push_back(*$1);}
               | BELL {aux.ctr.push_back(*$1);}
               | FUSE {aux.ctr.push_back(*$1);}
-              | LOCK {aux.ctr.push_back(*$1);};
+              | LOCK {aux.ctr.push_back(*$1);}
+              | JUNCTION {aux.ctr.push_back(*$1);};
 
 connectors2or3 : PLUG {aux.ctr.push_back(*$1); isAplug = true;}
                  | SWITCH {aux.ctr.push_back(*$1); isAplug = false;};
@@ -139,6 +185,27 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
 
 \restoregeometry
 
+\section{Mejoras introducidas}
+Una vez finalizada la versión inicial del proyecto, se añadieron algunas mejoras que tienen una gran importancia en cuanto a evitar las posibles ambigüedades que se pudiesen dar en el diseño del circuito eléctrico. Para ello se añadió un nuevo elemento al que se denominó \texttt{juntion}, que formalmente es el punto de conexión a partir del cual se divide el potencial de tensión. La inclusión de este elemento permitía, por ejemplo, que no hubiese ambigüedad con respecto a la posición de un determinado elemento dentro del circuito, siendo su uso recomendable en el caso de circuitos más complejos.
 
+La otra mejora introducida en la segunda iteración del proyecto es la posibilidad de conocer en qué líneas exactamente se han producido los errores en el diseño del circuito, lo cual, a la hora de depurar grandes circuitos resulta imprescindible. Se establece además, una jerarquía dentro de los errores que se pueden producir.
+
+\begin{figure}[h!]
+\begin{center}
+\begin{forest}
+for tree={
+  treenode/.style = {align=center, inner sep=3pt,
+        text centered, rectangle, draw, font=\sffamily},
+  blue-arrow/.style = {draw=blue!20},
+  edge=-{stealth}}
+[Token Inválido, treenode
+  [Componente duplicado, treenode
+    [Elemento sin conexión a R/S, treenode]
+  ]
+]
+\end{forest}
+\end{center}
+\caption{Jerarquía de los errores}
+\end{figure}
 
 \end{document}

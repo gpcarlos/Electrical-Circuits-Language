@@ -49,6 +49,8 @@ En primer lugar, se describen las palabras reservadas del lenguaje, que son las 
   \item[$\ $]\texttt{bell}
   \item[$\ $]\texttt{fuse}
   \item[$\ $]\texttt{relay}
+  \item[$\ $]\texttt{junction}
+
 \end{enumerate*}
 \end{center}
 
@@ -183,6 +185,76 @@ lamp1(button1,S)
   \label{tab:Resumen}
 \end{table}
 
+Sin embargo, cuando vaya a realizar circuitos con una cierta complejidad se le recomienda hacer uso de \texttt{junction}. Este elemento permite reducir la ambigüedad al crear circuitos eléctricos. Su uso resulta muy sencillo. Tomando como ejemplo el 3er circuito del cuadro anterior, las circunferencias que observa entre las tomas R y S y los elementos, son los puntos en los que se divide(o se une) el potencial eléctrico. Esto permite que el diseño de circuitos complejos sea lo más claro posible, sin posibilidad alguna de ambigüedad. Veamos un ejemplo que ilustre el funcionamiento de este elemento.
+
+\begin{center}
+\begin{table}
+\begin{tabular}{| >{\centering\arraybackslash}m{5cm}|
+  >{\centering\arraybackslash}m{9.5cm}|}
+  \hline
+  Código & Output \\ \hline
+\begin{lstlisting}[basicstyle=\footnotesize]
+junction1(R,button1)
+button1(junction1,lamp1)
+lamp1(button1,button2)
+button2(lamp1,juction6)
+junction2(junction1,juction3)
+junction3(junction2,lamp2)
+lamp2(junction3,junction5)
+junction4(junction2,lamp3)
+lamp4(junction3,junction4)
+lamp3(junction4,junction5)
+junction5(lamp2,junction6)
+junction6(button2,S)
+\end{lstlisting}
+&
+\scalebox{0.7}{
+\begin{circuitikz} \draw
+       (0,0)
+         to[short] (0,1)
+         to[short] (0,-1)
+          (0,0) node[label={[font=\footnotesize]left:R}] {}
+             to[short,-o,l={\footnotesize junction1}] (2,0)
+             to[short] (2,1)
+             to[short] (3,1)
+             to[push button,l={\footnotesize button1}] (4,1)
+             to[lamp,l={lamp1}] (6,1)
+             to[push button,l={\footnotesize button2}] (8,1)
+             to[short] (9,1)
+             to[short,-o,l={\footnotesize junction4}] (9,0)
+        (2,0)
+          to[short] (2,-1)
+          to[short,-o,l={\footnotesize junction2}] (3,-1)
+          to[short] (4,-1)
+          to[lamp,l={\footnotesize lamp2}] (5,-1)
+          to[short,-o,l={\footnotesize junction3}] (6,-1)
+          to[short] (9,-1)
+          to[short] (9,0)
+
+        (3,-1)
+          to[short] (3,-2)
+          to[lamp,l={\footnotesize lamp4}] (3,-3)
+          to[short] (3,-4)
+          to[short] (4,-4)
+          to[lamp, l={\footnotesize lamp3}] (5,-4)
+          to[short] (6,-4)
+          to[short] (6,-1)
+
+        (9,0)
+          to[short] (10,0)
+        (10,0)node[label={[font=\footnotesize]right:S}]{}
+        (10,1)
+          to[short] (10,-1)
+;
+     \end{circuitikz}
+     }
+\\ \hline
+\end{tabular}
+\caption{Uso del junction}
+\end{table}
+\end{center}
+
+\vspace{-40pt}
 Se deben tener las siguientes consideraciones a la hora de programar: no se permite la redefinición de componentes, es decir, si se intenta definir dos veces el mismo componente, habrá un mensaje de error indicando qué componente está repetido, considerándose el circuito inválido por este motivo. Recuerde además, que el circuito debe quedar cerrado, si no lo está, se considerará inválido y se notificará con el mensaje de error correspondiente.
 
 Y, la más importante, a la hora de definir los elementos, todos tendrán como mínimo dos conexiones, ya que deben estar conectados a las tomas R y S. Puede estar conectado de forma directa o a través de otro elemento, pero el primer elemento al que se conecta debe ser R o a un elemento que conduzca a R y lo mismo ocurre con el segundo elemento, solo que esta vez, en lugar de con R es con S. Los siguientes elementos (si los tiene) a los que se conecta no deben seguir ningún criterio específico sobre el orden, a excepción del enchufe(plug) cuyo tercer conector sólo puede ir a tierra(G). Puede ver de forma más clara en el cuadro \ref{tab:TablaConectores} los conectores que puede definir, junto con su correspondiente número de conectores.
@@ -205,12 +277,11 @@ Y, la más importante, a la hora de definir los elementos, todos tendrán como m
     Cerradura eléctrica (\texttt{lock}) & 2 \\ \hline
     Regulador (\texttt{regulator}) & 6 \\ \hline
     Detector de movimiento (\texttt{movDetector}) & 6 \\ \hline
+    Punto de unión (\texttt{junction}) & 2 \\ \hline
   \end{tabular}
   \caption{Lista de componentes disponibles con su correspondiente número de conectores.}
   \label{tab:TablaConectores}
 \end{table}
-
-\
 
 Si lo desea, puede añadir comentarios a su código haciendo uso de \texttt{// ...} y \texttt{/* ... */}
 
