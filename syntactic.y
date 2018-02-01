@@ -3,10 +3,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <string.h>
 
 int yylex(void);
 void yyerror(const char *s);
-
+static int nline=0;
+int linerepeated=0;
+int lineRS = 0;
 bool error = false, isAplug = false, has3 = false;
 int limit = 0;
 
@@ -18,7 +22,7 @@ struct connector {
 
 connector aux;
 std::vector<connector> circuit;
-
+std::vector<std::string*> avoidRepeatedStates;
 %}
 
 %union {
@@ -84,8 +88,8 @@ morecontentT1 :  contentT1 ',' contentT1 ')' {limit+=2;}
 morecontentT2 : ')' {has3=false;}| ',' contentT2 ')' {has3=true;};
 
 element : connectors2 '(' contentT1 ',' contentT1 ')'
-          {circuit.push_back(aux); aux=connector();}
-
+          {circuit.push_back(aux); aux=connector();
+          nline++;}
           | connectors2or3 '(' contentT2 ',' contentT2 morecontentT2
           {circuit.push_back(aux); aux=connector();
            if (isAplug&&has3) {
@@ -94,11 +98,12 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
                error = true; yyerror(typeError.c_str());
              }
            }
+           nline++;
           }
 
           | connectors6 '(' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ',' contentT1 ')'
-          {circuit.push_back(aux); aux=connector();}
-
+          {circuit.push_back(aux); aux=connector();
+          nline++;}
           | connectors18 '(' morecontentT1
           {circuit.push_back(aux); aux=connector();
            if (limit>18) {
@@ -110,6 +115,7 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
                error = true; yyerror(typeError.c_str());
              } else {limit = 0;}
            }
+           nline++;
           };
 
 
@@ -117,12 +123,20 @@ element : connectors2 '(' contentT1 ',' contentT1 ')'
 
 void checkDuplicates(){
   std::vector<connector>::iterator element1 = circuit.begin();
+  int aux=0;
   while(element1 != circuit.end()){
+    aux++;
     std::vector<connector>::iterator element2 = element1+1;
     while(element2!=circuit.end()){
-      if(element1->ctr[0] == element2->ctr[0]){
+      if((element1->ctr[0] == element2->ctr[0])) {
         std::string typeError = element1->ctr[0]+ " is duplicated";
-        error = true; yyerror(typeError.c_str());
+        std::vector<std::string*>::iterator isatleft = find(avoidRepeatedStates.begin(), avoidRepeatedStates.end(), &element2->ctr[0]);
+        std::vector<std::string*>::iterator isatright = find(avoidRepeatedStates.begin(), avoidRepeatedStates.end(), &element1->ctr[0]);
+        if(isatleft == avoidRepeatedStates.end() && isatright == avoidRepeatedStates.end()){
+          avoidRepeatedStates.push_back(&element1->ctr[0]);
+          linerepeated=aux;
+          error = true; yyerror(typeError.c_str());
+        }
       }
       ++element2;
     }
@@ -166,12 +180,14 @@ bool lookforCable (std::string cable, std::string elem) {
 
 void checkCircuit () {
   std::vector<connector>::iterator it = circuit.begin();
-
+  int aux=0;
   while (it!= circuit.end()) {
+      aux++;
       if (it->R=="nope") {
         if (lookforCable("R",it->ctr[1])) {
           it->R="R";
         } else {
+          lineRS=aux;
           std::string typeError = it->ctr[0]+" is not connected to R";
           error = true; yyerror(typeError.c_str());
         }
@@ -180,6 +196,7 @@ void checkCircuit () {
         if (lookforCable("S",it->ctr[2])) {
           it->S="S";
         } else {
+          lineRS=aux;
           std::string typeError = it->ctr[0]+" is not connected to S";
           error = true; yyerror(typeError.c_str());
         }
@@ -203,13 +220,18 @@ void showCircuit () {
 }
 
 void yyerror(const char* s) {
-  if (error)
-    std::cerr << "Error " << s << std::endl;
-  else {
-    if (aux.ctr.size()!=0)
-      std::cerr << "Error " << s << " in the element " << aux.ctr[0] << std::endl;
+  if (error){
+    if(strstr(s,"duplicated")!=NULL)
+      std::cerr << "Line " << linerepeated+1 << ": Error " << s << std::endl;
     else
-      std::cerr << "Error " << s << std::endl;
+      std::cerr << "Line " << lineRS << ": Error " << s << std::endl;
+  }
+  else {
+    if (aux.ctr.size()!=0){
+      std::cerr << "Line " << nline+1 << ": "  << s << " in the element " << aux.ctr[0] << std::endl;
+    }
+    else
+      std::cerr << "Line " << nline+1 << ": Error " << s << std::endl;
     error = true;
   }
 }
