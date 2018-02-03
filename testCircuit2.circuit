@@ -1,0 +1,20 @@
+// Ejemplo 2 de las transparencias
+
+junction0(R,lamp0)
+lamp0(junction0,junction1) lamp1(junction0,junction1)
+lamp2(junction0,junction1) lamp3(junction0,junction1)
+junction1(lamp0,minute)
+
+junction2(R,button0)
+button0(junction2,junction3) button1(junction2,junction3)
+button2(junction2,junction3) button3(junction2,junction3)
+junction3(button0,minute)
+
+switch0(junction1,switch1) // Switch del minutero
+minute(junction3,switch1,junction1,switch1)
+switch1(junction1,S,switch1)
+
+bell0(R,button4) button4(bell0,S) button5(bell0,S)
+bell1(R,button6) button6(bell1,S) button7(bell1,S)
+bell2(R,button8) button8(bell2,S) button9(bell2,S)
+bell3(R,button10) button10(bell3,S) button11(bell3,S)
