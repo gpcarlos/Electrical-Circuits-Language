@@ -49,4 +49,4 @@ Practice of the subject Automata Theory and Formal Language. University of Cádi
 ## Authors
 
 * **Juan Francisco Cabrera Sánchez** - *Github profile* - [JF95](https://github.com/JF95)
-* **Carlos Gallardo Polanco** - *Github profile* - [gpcarlos95](https://github.com/gpcarlos95)
+* **Carlos Gallardo Polanco** - *Github profile* - [gpcarlos](https://github.com/gpcarlos)
